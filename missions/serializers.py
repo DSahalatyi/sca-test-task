@@ -9,11 +9,6 @@ class TargetSerializer(serializers.ModelSerializer):
         model = Target
         fields = ("name", "country", "notes", "is_complete")
 
-    def validate_notes(self, value):
-        target = self.instance
-        self.validate_target_status(target)
-        return value
-
     @staticmethod
     def validate_target_status(target):
         if target.is_complete:
@@ -44,6 +39,14 @@ class MissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mission
         fields = "__all__"
+
+    def validate(self, data):
+        targets_data = data.get('targets', [])
+        target_names = [target['name'] for target in targets_data]
+        if len(target_names) != len(set(target_names)):
+            raise serializers.ValidationError({"targets": "Target names must be unique within a mission."})
+
+        return data
 
     def create(self, validated_data):
         with transaction.atomic():

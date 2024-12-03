@@ -41,3 +41,16 @@ class CatUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cat
         fields = ("salary",)
+
+    def validate(self, data):
+        errors = {}
+        validator = NumberValidator()
+        try:
+            validator.validate_positive("salary", data.get("salary"))
+        except serializers.ValidationError as e:
+            errors["salary"] = e.detail
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return super().validate(data)
