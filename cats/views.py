@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 
 from cats.models import Cat
 from cats.serializers import CatSerializer, CatUpdateSerializer
@@ -16,3 +17,15 @@ class CatViewSet(viewsets.ModelViewSet):
             serializer = CatUpdateSerializer
 
         return serializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+
+        if serializer.is_valid():
+            self.perform_update(serializer)
+            instance = self.get_object()
+            response_serializer = CatSerializer(instance)
+            return Response(response_serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
